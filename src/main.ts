@@ -8,8 +8,14 @@ async function bootstrap() {
   app.enableCors({ origin: 'http://localhost:3001' });
 
   // Validate all incoming DTOs; strip properties not in the DTO (whitelist)
+  // NOTE: transform: true is required so that @Type(() => Number) in query
+  // DTOs coerces the raw query-string strings to numbers before validation.
   app.useGlobalPipes(
-    new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }),
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
   );
 
   // Serialize responses through class-transformer — required for @Exclude() on passwordHash

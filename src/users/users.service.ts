@@ -7,6 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../database/entities/user.entity.js';
 import { UserResponseDto } from './dto/user-response.dto.js';
+import { PaginatedUsersResponseDto } from './dto/paginated-users-response.dto.js';
 
 function mapToUserResponseDto(
   user: User,
@@ -35,8 +36,12 @@ export class UsersService {
 
   async findAll(
     currentUserId: number,
-  ): Promise<{ items: UserResponseDto[]; totalCount: number }> {
-    const users = await this.userRepo
+    page: number,
+    limit: number,
+  ): Promise<PaginatedUsersResponseDto> {
+    // NOTE: getManyAndCount issues a single query with COUNT(*) OVER() — more
+    // efficient than a separate count query or counting the in-memory array.
+    const [users, totalCount] = await this.userRepo
       .createQueryBuilder('u')
       .leftJoinAndSelect(
         'u.followers',
@@ -50,11 +55,14 @@ export class UsersService {
         'blocker.id = :currentUserId',
         { currentUserId },
       )
-      .getMany();
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
 
     const items = users.map((u) => mapToUserResponseDto(u, currentUserId));
+    const totalPages = Math.ceil(totalCount / limit);
 
-    return { items, totalCount: items.length };
+    return { items, totalCount, page, limit, totalPages };
   }
 
   findById(id: number): Promise<User | null> {
@@ -100,7 +108,8 @@ export class UsersService {
   }
 
   async block(targetId: number, blockerId: number): Promise<void> {
-    if (targetId === blockerId) throw new BadRequestException('Cannot block yourself');
+    if (targetId === blockerId)
+      throw new BadRequestException('Cannot block yourself');
     const [blocker, target] = await Promise.all([
       this.userRepo.findOne({
         where: { id: blockerId },

@@ -5,12 +5,14 @@ import {
   Delete,
   Param,
   ParseIntPipe,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { UsersService } from './users.service.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { CurrentUser } from '../auth/decorators/current-user.decorator.js';
-import { UserResponseDto } from './dto/user-response.dto.js';
+import { PaginateUsersQueryDto } from './dto/paginate-users-query.dto.js';
+import { PaginatedUsersResponseDto } from './dto/paginated-users-response.dto.js';
 
 @UseGuards(JwtAuthGuard)
 @Controller('users')
@@ -19,9 +21,10 @@ export class UsersController {
 
   @Get()
   async findAll(
+    @Query() query: PaginateUsersQueryDto,
     @CurrentUser() user: { id: number; username: string },
-  ): Promise<{ items: UserResponseDto[]; totalCount: number }> {
-    return this.usersService.findAll(user.id);
+  ): Promise<PaginatedUsersResponseDto> {
+    return this.usersService.findAll(user.id, query.page, query.limit);
   }
 
   @Post(':id/follow')
