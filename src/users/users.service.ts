@@ -65,6 +65,29 @@ export class UsersService {
     return { items, totalCount, page, limit, totalPages };
   }
 
+  async findOne(id: number, currentUserId: number): Promise<UserResponseDto> {
+    const user = await this.userRepo
+      .createQueryBuilder('u')
+      .leftJoinAndSelect(
+        'u.followers',
+        'follower',
+        'follower.id = :currentUserId',
+        { currentUserId },
+      )
+      .leftJoinAndSelect(
+        'u.blockedByUsers',
+        'blocker',
+        'blocker.id = :currentUserId',
+        { currentUserId },
+      )
+      .where('u.id = :id', { id })
+      .getOne();
+
+    if (!user) throw new NotFoundException(`User ${id} not found`);
+
+    return mapToUserResponseDto(user, currentUserId);
+  }
+
   findById(id: number): Promise<User | null> {
     return this.userRepo.findOneBy({ id });
   }
