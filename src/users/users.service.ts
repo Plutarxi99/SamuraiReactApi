@@ -24,6 +24,7 @@ function mapToUserResponseDto(
       country: user.location_country,
     },
     is_blocked: user.blockedByUsers.some((b) => b.id === currentUserId),
+    photo: user.photo,
   };
 }
 
@@ -94,6 +95,37 @@ export class UsersService {
 
   findByUsername(username: string): Promise<User | null> {
     return this.userRepo.findOneBy({ username });
+  }
+
+  // NOTE: update() is used instead of save() — we only need to patch one column,
+  // no entity lifecycle hooks or cascades are involved.
+  async updatePhoto(
+    userId: number,
+    photoUrl: string,
+  ): Promise<UserResponseDto> {
+    await this.userRepo.update(userId, { photo: photoUrl });
+
+    // Re-fetch with relations so mapToUserResponseDto has the data it needs.
+    const user = await this.userRepo
+      .createQueryBuilder('u')
+      .leftJoinAndSelect(
+        'u.followers',
+        'follower',
+        'follower.id = :userId',
+        { userId },
+      )
+      .leftJoinAndSelect(
+        'u.blockedByUsers',
+        'blocker',
+        'blocker.id = :userId',
+        { userId },
+      )
+      .where('u.id = :userId', { userId })
+      .getOne();
+
+    if (!user) throw new NotFoundException(`User ${userId} not found`);
+
+    return mapToUserResponseDto(user, userId);
   }
 
   create(data: { username: string; passwordHash: string }): Promise<User> {

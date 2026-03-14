@@ -11,4 +11,5 @@ export class UserResponseDto {
   followed: boolean;
   location: LocationDto;
   is_blocked: boolean;
+  photo: string | null;
 }

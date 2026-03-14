@@ -42,6 +42,11 @@ export class User {
   @Column({ type: 'text', nullable: true, default: null })
   location_country: string | null;
 
+  // NOTE: explicit type: 'text' required — TypeScript union with null compiles to
+  // Object at runtime, which breaks TypeORM's reflection-based column type inference.
+  @Column({ type: 'text', nullable: true, default: null })
+  photo: string | null;
+
   @ManyToMany(() => User, (user) => user.followers)
   @JoinTable({
     name: 'follows',

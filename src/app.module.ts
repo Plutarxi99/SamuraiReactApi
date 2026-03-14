@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { UsersModule } from './users/users.module.js';
@@ -20,6 +22,13 @@ import { Message } from './database/entities/message.entity.js';
       database: 'db.sqlite',
       entities: [User, Post, Dialog, Message],
       synchronize: process.env.NODE_ENV !== 'production',
+    }),
+    // NOTE: serveRoot must include the global /api prefix so that uploaded file
+    // URLs (http://localhost:3000/api/uploads/avatars/<file>) resolve correctly.
+    // The rootPath points to the uploads/ folder at project root (cwd at runtime).
+    ServeStaticModule.forRoot({
+      rootPath: join(process.cwd(), 'uploads'),
+      serveRoot: '/api/uploads',
     }),
     UsersModule,
     PostsModule,
