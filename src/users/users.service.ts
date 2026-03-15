@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Logger,
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
@@ -30,6 +31,8 @@ function mapToUserResponseDto(
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
+
   constructor(
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
@@ -67,6 +70,9 @@ export class UsersService {
   }
 
   async findOne(id: number, currentUserId: number): Promise<UserResponseDto> {
+    const t0 = Date.now();
+    this.logger.log(`findOne(${id}) start`);
+
     const user = await this.userRepo
       .createQueryBuilder('u')
       .leftJoinAndSelect(
@@ -83,6 +89,8 @@ export class UsersService {
       )
       .where('u.id = :id', { id })
       .getOne();
+
+    this.logger.log(`DB query findOne(${id}): ${Date.now() - t0}ms`);
 
     if (!user) throw new NotFoundException(`User ${id} not found`);
 

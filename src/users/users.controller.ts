@@ -94,7 +94,10 @@ export class UsersController {
     @Param('id', ParseIntPipe) id: number,
     @CurrentUser() user: { id: number; username: string },
   ): Promise<UserResponseDto> {
-    return this.usersService.findOne(id, user.id);
+    const t0 = Date.now();
+    const result = await this.usersService.findOne(id, user.id);
+    console.log(`[Controller] GET /users/${id} total: ${Date.now() - t0}ms`);
+    return result;
   }
 
   @Post(':id/follow')
