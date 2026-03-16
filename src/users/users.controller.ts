@@ -21,7 +21,6 @@ import {
   ApiResponse,
   ApiBearerAuth,
   ApiParam,
-  ApiQuery,
   ApiConsumes,
   ApiBody,
 } from '@nestjs/swagger';
@@ -58,8 +57,14 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get a paginated list of all users (excluding self)' })
-  @ApiResponse({ status: 200, description: 'Paginated user list', type: PaginatedUsersResponseDto })
+  @ApiOperation({
+    summary: 'Get a paginated list of all users (excluding self)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Paginated user list',
+    type: PaginatedUsersResponseDto,
+  })
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT token' })
   async findAll(
     @Query() query: PaginateUsersQueryDto,
@@ -90,7 +95,10 @@ export class UsersController {
       },
     }),
   )
-  @ApiOperation({ summary: 'Upload or replace the current user avatar (max 5 MB, JPEG/PNG/GIF/WEBP)' })
+  @ApiOperation({
+    summary:
+      'Upload or replace the current user avatar (max 5 MB, JPEG/PNG/GIF/WEBP)',
+  })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     description: 'Avatar image file',
@@ -106,8 +114,15 @@ export class UsersController {
       },
     },
   })
-  @ApiResponse({ status: 201, description: 'Avatar updated — returns updated user profile', type: UserResponseDto })
-  @ApiResponse({ status: 400, description: 'No file uploaded or unsupported file type' })
+  @ApiResponse({
+    status: 201,
+    description: 'Avatar updated — returns updated user profile',
+    type: UserResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'No file uploaded or unsupported file type',
+  })
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT token' })
   async uploadPhoto(
     @UploadedFile() file: Express.Multer.File,
@@ -156,7 +171,11 @@ export class UsersController {
 
   @Delete(':id/follow')
   @ApiOperation({ summary: 'Unfollow a user' })
-  @ApiParam({ name: 'id', type: Number, description: 'ID of the user to unfollow' })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'ID of the user to unfollow',
+  })
   @ApiResponse({ status: 200, description: 'Unfollowed the user' })
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT token' })
   @ApiResponse({ status: 404, description: 'User not found' })
@@ -170,9 +189,16 @@ export class UsersController {
 
   @Post(':id/block')
   @ApiOperation({ summary: 'Block a user' })
-  @ApiParam({ name: 'id', type: Number, description: 'ID of the user to block' })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'ID of the user to block',
+  })
   @ApiResponse({ status: 201, description: 'User blocked' })
-  @ApiResponse({ status: 400, description: 'Cannot block yourself or already blocked' })
+  @ApiResponse({
+    status: 400,
+    description: 'Cannot block yourself or already blocked',
+  })
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT token' })
   @ApiResponse({ status: 404, description: 'User not found' })
   async block(
