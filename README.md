@@ -1,98 +1,147 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Samurai Social API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+REST API социальной сети, построенный на NestJS 11 с TypeScript. Поддерживает аутентификацию, профили пользователей, посты, диалоги и личные сообщения.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Технологии
 
-## Description
+- **Framework**: NestJS 11 + TypeScript
+- **Database**: SQLite (better-sqlite3) + TypeORM
+- **Auth**: JWT (Passport.js) + bcrypt
+- **Docs**: Swagger UI + ReDoc
+- **Validation**: class-validator + class-transformer
+- **File Upload**: Multer (аватары)
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
+## Быстрый старт
 
 ```bash
-$ npm install
+npm install
+npm run start:dev
 ```
 
-## Compile and run the project
+Сервер запустится на `http://localhost:3000`.
+
+## Переменные окружения
+
+| Переменная  | По умолчанию                  | Описание             |
+|-------------|-------------------------------|----------------------|
+| `PORT`      | `3000`                        | Порт сервера         |
+| `JWT_SECRET`| `dev-secret-change-in-prod`   | Секрет для JWT токенов |
+| `NODE_ENV`  | —                             | `production` отключает auto-sync БД |
+
+Создайте файл `.env` в корне проекта:
+
+```env
+PORT=3000
+JWT_SECRET=your-secret-key
+NODE_ENV=development
+```
+
+## Документация API
+
+После запуска сервера доступны:
+
+| URL | Описание |
+|-----|----------|
+| `http://localhost:3000/api/docs` | Swagger UI (интерактивный) |
+| `http://localhost:3000/api/docs/redoc` | ReDoc (справочник) |
+| `http://localhost:3000/api/docs-json` | OpenAPI JSON спецификация |
+
+### Авторизация в Swagger UI
+
+1. `POST /api/auth/login` → скопировать `accessToken`
+2. Нажать кнопку **Authorize** (вверху справа)
+3. Ввести `Bearer <токен>` → **Authorize**
+
+## Эндпоинты
+
+### Auth
+
+| Метод | URL | Auth | Описание |
+|-------|-----|------|----------|
+| POST | `/api/auth/register` | — | Регистрация |
+| POST | `/api/auth/login` | — | Вход |
+| GET | `/api/auth/me` | JWT | Текущий пользователь |
+
+### Users
+
+| Метод | URL | Описание |
+|-------|-----|----------|
+| GET | `/api/users` | Список пользователей (пагинация) |
+| GET | `/api/users/:id` | Профиль пользователя |
+| POST | `/api/users/me/photo` | Загрузить аватар |
+| POST | `/api/users/:id/follow` | Подписаться |
+| DELETE | `/api/users/:id/follow` | Отписаться |
+| POST | `/api/users/:id/block` | Заблокировать |
+
+> Все эндпоинты Users требуют JWT.
+
+### Posts
+
+| Метод | URL | Описание |
+|-------|-----|----------|
+| GET | `/api/posts?userId=` | Посты пользователя (свои, если `userId` не указан) |
+| POST | `/api/posts` | Создать пост |
+
+### Dialogs
+
+| Метод | URL | Описание |
+|-------|-----|----------|
+| GET | `/api/dialogs` | Список диалогов |
+| GET | `/api/dialogs/:id/messages` | Сообщения диалога |
+| POST | `/api/dialogs/:id/messages` | Отправить сообщение |
+
+## Структура проекта
+
+```
+src/
+├── auth/               # JWT-аутентификация
+├── users/              # Пользователи, подписки, блокировки, аватары
+├── posts/              # Посты
+├── dialogs/            # Диалоги и сообщения
+└── database/
+    ├── entities/       # TypeORM-сущности
+    └── data-source.ts  # Конфигурация TypeORM
+```
+
+## Загрузка аватара
+
+- **Endpoint**: `POST /api/users/me/photo` (multipart/form-data, поле `photo`)
+- **Разрешённые форматы**: JPEG, PNG, GIF, WEBP
+- **Максимальный размер**: 5 MB
+- **Расположение**: `./uploads/avatars/`
+- **URL файла**: `http://localhost:3000/api/uploads/avatars/<filename>`
+
+## Команды
 
 ```bash
-# development
-$ npm run start
+# Разработка
+npm run start:dev       # Watch-режим
+npm run start:debug     # С отладчиком
 
-# watch mode
-$ npm run start:dev
+# Production
+npm run build
+npm run start:prod
 
-# production mode
-$ npm run start:prod
+# Тесты
+npm run test            # Unit-тесты
+npm run test:e2e        # E2E-тесты
+npm run test:cov        # Покрытие
+
+# Миграции БД
+npm run migration:generate
+npm run migration:run
+npm run migration:revert
+
+# Линтинг
+npm run lint
+npm run format
 ```
 
-## Run tests
+## Миграции (Production)
+
+В режиме `NODE_ENV=production` автоматическая синхронизация схемы БД отключена. Используйте миграции:
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+NODE_ENV=production npm run migration:generate -- -n MigrationName
+NODE_ENV=production npm run migration:run
 ```
-
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
