@@ -176,7 +176,11 @@ export class UsersController {
   @Get(':id')
   @ApiOperation({ summary: 'Get a user profile by ID' })
   @ApiParam({ name: 'id', type: Number, description: 'Target user ID' })
-  @ApiResponse({ status: 200, description: 'User profile', type: UserResponseDto })
+  @ApiResponse({
+    status: 200,
+    description: 'User profile',
+    type: UserResponseDto,
+  })
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT token' })
   @ApiResponse({ status: 404, description: 'User not found' })
   async findOne(
@@ -191,9 +195,16 @@ export class UsersController {
 
   @Post(':id/follow')
   @ApiOperation({ summary: 'Follow a user' })
-  @ApiParam({ name: 'id', type: Number, description: 'ID of the user to follow' })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'ID of the user to follow',
+  })
   @ApiResponse({ status: 201, description: 'Now following the user' })
-  @ApiResponse({ status: 400, description: 'Cannot follow yourself or already following' })
+  @ApiResponse({
+    status: 400,
+    description: 'Cannot follow yourself or already following',
+  })
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT token' })
   @ApiResponse({ status: 404, description: 'User not found' })
   async follow(
