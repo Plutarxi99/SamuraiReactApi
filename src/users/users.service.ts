@@ -3,12 +3,14 @@ import {
   Logger,
   NotFoundException,
   BadRequestException,
+  ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../database/entities/user.entity.js';
 import { UserResponseDto } from './dto/user-response.dto.js';
 import { PaginatedUsersResponseDto } from './dto/paginated-users-response.dto.js';
+import { UpdateProfileDto } from './dto/update-profile.dto.js';
 
 function mapToUserResponseDto(
   user: User,
@@ -128,6 +130,57 @@ export class UsersService {
         'blocker.id = :userId',
         { userId },
       )
+      .where('u.id = :userId', { userId })
+      .getOne();
+
+    if (!user) throw new NotFoundException(`User ${userId} not found`);
+
+    return mapToUserResponseDto(user, userId);
+  }
+
+  // NOTE: update() is preferred over save() — we only patch scalar columns with
+  // no cascades involved. A pre-flight uniqueness check for username avoids
+  // surfacing a raw SQLite UNIQUE constraint error as an unhandled 500.
+  async updateProfile(
+    userId: number,
+    dto: UpdateProfileDto,
+  ): Promise<UserResponseDto> {
+    if (dto.username !== undefined) {
+      const existing = await this.userRepo.findOneBy({
+        username: dto.username,
+      });
+      if (existing && existing.id !== userId) {
+        throw new ConflictException(
+          `Username "${dto.username}" is already taken`,
+        );
+      }
+    }
+
+    // Only pass non-undefined fields so we never overwrite unrelated columns.
+    const patch: Partial<User> = {};
+    if (dto.username !== undefined) patch.username = dto.username;
+    if (dto.full_name !== undefined) patch.full_name = dto.full_name;
+    if (dto.place_birthday !== undefined)
+      patch.place_birthday = dto.place_birthday;
+    if (dto.status_text !== undefined) patch.status_text = dto.status_text;
+    if (dto.location_city !== undefined)
+      patch.location_city = dto.location_city;
+    if (dto.location_country !== undefined)
+      patch.location_country = dto.location_country;
+
+    if (Object.keys(patch).length > 0) {
+      await this.userRepo.update(userId, patch);
+    }
+
+    // Re-fetch with relations so mapToUserResponseDto has the data it needs.
+    const user = await this.userRepo
+      .createQueryBuilder('u')
+      .leftJoinAndSelect('u.followers', 'follower', 'follower.id = :userId', {
+        userId,
+      })
+      .leftJoinAndSelect('u.blockedByUsers', 'blocker', 'blocker.id = :userId', {
+        userId,
+      })
       .where('u.id = :userId', { userId })
       .getOne();
 

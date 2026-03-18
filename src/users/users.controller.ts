@@ -2,14 +2,18 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Delete,
   Param,
   ParseIntPipe,
+  Body,
   Query,
   UseGuards,
   UseInterceptors,
   UploadedFile,
   BadRequestException,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -27,6 +31,7 @@ import {
 import { UserResponseDto } from './dto/user-response.dto.js';
 import { PaginatedUsersResponseDto } from './dto/paginated-users-response.dto.js';
 import { PaginateUsersQueryDto } from './dto/paginate-users-query.dto.js';
+import { UpdateProfileDto } from './dto/update-profile.dto.js';
 import { UsersService } from './users.service.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { CurrentUser } from '../auth/decorators/current-user.decorator.js';
@@ -136,6 +141,36 @@ export class UsersController {
     // NOTE: Global prefix is /api, so the public URL must include it.
     const photoUrl = `http://localhost:3000/api/uploads/avatars/${file.filename}`;
     return await this.usersService.updatePhoto(user.id, photoUrl);
+  }
+
+  // NOTE: This literal route segment must sit above GET :id so that NestJS
+  // matches "profile" here before ParseIntPipe tries to coerce it as a number.
+  @Patch('profile')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Update the current user profile' })
+  @ApiBody({ type: UpdateProfileDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Updated user profile',
+    type: UserResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation error — invalid field value',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Missing or invalid JWT token',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Username is already taken by another user',
+  })
+  async updateProfile(
+    @Body() dto: UpdateProfileDto,
+    @CurrentUser() user: { id: number; username: string },
+  ): Promise<UserResponseDto> {
+    return this.usersService.updateProfile(user.id, dto);
   }
 
   @Get(':id')
