@@ -29,8 +29,8 @@ async function bootstrap() {
     .setTitle('Samurai Social API')
     .setDescription(
       'REST API for the Samurai social network. ' +
-      'Authenticate via POST /api/auth/login, copy the returned `accessToken`, ' +
-      'then click "Authorize" and enter: **Bearer <token>**.',
+        'Authenticate via POST /api/auth/login, copy the returned `accessToken`, ' +
+        'then click "Authorize" and enter: **Bearer <token>**.',
     )
     .setVersion('1.0')
     // NOTE: The security scheme name 'jwt' must match the name passed to
